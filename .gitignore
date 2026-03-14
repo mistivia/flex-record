@@ -1,0 +1,10 @@
+dist-newstyle/
+task.md
+.inputrc
+.Xauthority
+.bashrc
+.cache/
+.local/
+.config/
+result
+cabal.project.local
