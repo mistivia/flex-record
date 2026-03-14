@@ -18,4 +18,5 @@ test-suite test
   build-depends:      base >= 4.14 && < 5
                     , flex-record
                     , HUnit
+                    , accessor-hs
   default-language:   GHC2024

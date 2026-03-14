@@ -1,5 +1,28 @@
 {
   "nodes": {
+    "accessor-hs": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773474142,
+        "narHash": "sha256-pd//7ywmyfHRpKUsq0z1Bxyr4qYNiKHJpwTxReShs90=",
+        "owner": "mistivia",
+        "repo": "accessor-hs",
+        "rev": "8ff2d71313503deb2356c1293e7a26198cbe7468",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mistivia",
+        "repo": "accessor-hs",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -36,6 +59,7 @@
     },
     "root": {
       "inputs": {
+        "accessor-hs": "accessor-hs",
         "flake-utils": "flake-utils",
         "nixpkgs": "nixpkgs"
       }
