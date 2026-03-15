@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module FlexRecord.Json () where
+module Data.FlexRecord.Json () where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON (toJSON), object, withObject, (.=))
 import qualified Data.Aeson as Aeson
@@ -10,7 +10,7 @@ import qualified Data.Aeson.Key as Key
 import Data.Aeson.Types (Object, Pair, Parser)
 import Data.Kind (Type)
 import Data.Proxy (Proxy (Proxy))
-import FlexRecord (Field (Field), FlexRecord (FRCons, FRNil))
+import Data.FlexRecord (Field (Field), FlexRecord (FRCons, FRNil))
 import GHC.TypeLits (KnownSymbol, symbolVal)
 
 type family IsMaybe (t :: Type) :: Bool where

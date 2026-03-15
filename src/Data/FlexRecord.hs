@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module FlexRecord
+module Data.FlexRecord
   ( Field (..),
     FlexRecord (..),
     GetFieldType,
@@ -18,7 +18,7 @@ module FlexRecord
   )
 where
 
-import qualified Accessor
+import qualified Data.Accessor as Accessor
 import Data.Kind (Type)
 import GHC.TypeLits (ErrorMessage (Text), Symbol, TypeError)
 

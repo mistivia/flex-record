@@ -63,9 +63,9 @@ if a field name does not exist, compilation fails.
 `frAcc` turns a field into an `Accessor`, so you can continue using `view` / `set` / `over` / `dot` / `fdot`.
 
 ```haskell
-import qualified Accessor
-import Accessor (dot, fdot, over, set, view)
-import FlexRecord (frAcc)
+import qualified Data.Accessor as Accessor
+import Data.Accessor (dot, fdot, over, set, view)
+import Data.FlexRecord (frAcc)
 
 ageAcc :: Accessor.Accessor Person Int Int
 ageAcc = frAcc @"age"
@@ -106,8 +106,8 @@ frGet @"scores" (over eachScoreAcc (+ 1) person)
 ```haskell
 import Data.Aeson (eitherDecode, encode)
 import qualified Data.ByteString.Lazy.Char8 as LBS
-import FlexRecord (Field, FlexRecord, field, flexRecord, frGet)
-import FlexRecord.Json ()
+import Data.FlexRecord (Field, FlexRecord, field, flexRecord, frGet)
+import Data.FlexRecord.Json ()
 ```
 
 > Note: `FlexRecord.Json` is imported for side effects (instance declarations), so use `import FlexRecord.Json ()`.

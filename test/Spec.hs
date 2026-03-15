@@ -1,11 +1,11 @@
-import Accessor (dot, facc, over, set, view)
-import qualified Accessor
+import Data.Accessor (dot, facc, over, set, view)
+import qualified Data.Accessor as Accessor
 import Data.Aeson (Value (Object), eitherDecode, encode)
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KM
 import qualified Data.ByteString.Lazy.Char8 as LBS
-import FlexRecord (Field, FlexRecord, field, flexRecord, frAcc, frGet, frSet)
-import FlexRecord.Json ()
+import Data.FlexRecord (Field, FlexRecord, field, flexRecord, frAcc, frGet, frSet)
+import Data.FlexRecord.Json ()
 import Test.HUnit (Test (TestCase, TestList), assertEqual, assertFailure, errors, failures, runTestTT)
 
 type Person =
