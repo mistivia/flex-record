@@ -1,18 +1,24 @@
+# FlexRecord
+
+## Basic Information
+
 ProjectName: flex-record
 
-This is a haskell project.
+This is a Haskell project.
 
-The function is similar to Vinyl/Extensible/rowtype-record.
+Its functionality is similar to Vinyl/Extensible/rowtype-record.
 
-This is a library, no main
+This is a library project; there is no main executable.
 
-use HUnit for unit testing
+Use HUnit for unit testing.
 
-The project use GHC2024 language.
+This project uses the GHC2024 language edition.
 
-"accessor-hs" is used when testing, see: https://github.com/mistivia/accessor-hs/blob/master/README.md
+"accessor-hs" is used to provide lens-like functionality. See: https://github.com/mistivia/accessor-hs/blob/master/README.md
 
-When write multi-line lists, pose `,` and '[' like this (but only do this when list is too long):
+## List Formatting
+
+When writing multi-line lists, place `,` and `[` like this (only when the list is long):
 
 ```
 list = 
@@ -22,4 +28,43 @@ list =
     ]
 ```
 
-If the list is short, just write list inline: `lst = [1,2,3]`
+If the list is short, write it inline: `lst = [1,2,3]`
+
+## Nix
+
+This project uses `flake.nix`. Run `nix develop --command cabal test` when you want to run tests.
+
+## Haskell Language Extensions
+
+UndecidableInstances, TypeFamilies, and AllowAmbiguousTypes are enabled by default.
+
+DataKinds, GADTs, and TypeApplications are already included in GHC2024, so you do not need to enable them manually.
+
+## Typeclass
+
+Do **not** use OVERLAPPABLE or OVERLAPPING. In such cases, use closed type family dispatch.
+
+Because AllowAmbiguousTypes is enabled, you do not need to add an extra special parameter for dispatch. Just use type application directly.
+
+Here is an example:
+
+```haskell
+type family TypeDispatch a where
+    XXX = 'True
+    YYY = 'False
+
+class ToBeDispatchedImpl (dispatch :: Bool) a where
+    myFuncImpl :: a -> x -> y
+
+instance ToBeDispatchedImpl 'True a where
+    myFuncImpl = ...
+
+instance ToBeDispatchedImpl 'False a where
+    myFuncImpl = ...
+
+class ToBeDispatched a where
+    myFunc :: a -> x -> y
+
+instance (ToBeDispatchedImpl (TypeDispatch a) a) => ToBeDispatched a where
+    myFunc = myFuncImpl @(TypeDispatch a)
+```

@@ -7,8 +7,11 @@ license:            ISC
 library
   hs-source-dirs:     src
   exposed-modules:    FlexRecord
+                    , FlexRecord.Json
   build-depends:      base >= 4.14 && < 5
                     , accessor-hs
+                    , aeson
+                    , text
   default-language:   GHC2024
 
 
@@ -20,4 +23,6 @@ test-suite test
                     , flex-record
                     , HUnit
                     , accessor-hs
+                    , aeson
+                    , bytestring
   default-language:   GHC2024

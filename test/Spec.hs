@@ -1,10 +1,12 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeApplications #-}
-
 import Accessor (dot, facc, over, set, view)
 import qualified Accessor
+import Data.Aeson (Value (Object), eitherDecode, encode)
+import qualified Data.Aeson.Key as Key
+import qualified Data.Aeson.KeyMap as KM
+import qualified Data.ByteString.Lazy.Char8 as LBS
 import FlexRecord (Field, FlexRecord, field, flexRecord, frAcc, frGet, frSet)
-import Test.HUnit (Test (TestCase, TestList), assertEqual, errors, failures, runTestTT)
+import FlexRecord.Json ()
+import Test.HUnit (Test (TestCase, TestList), assertEqual, assertFailure, errors, failures, runTestTT)
 
 type Person =
   FlexRecord
@@ -25,6 +27,24 @@ person =
       , 20
       , 30
       ]
+
+type PersonMaybe =
+  FlexRecord
+    [ Field "name" String
+    , Field "nick" (Maybe String)
+    ]
+
+personMaybeNothing :: PersonMaybe
+personMaybeNothing =
+  flexRecord
+    $ field @"name" "uwu"
+    . field @"nick" Nothing
+
+personMaybeJust :: PersonMaybe
+personMaybeJust =
+  flexRecord
+    $ field @"name" "uwu"
+    . field @"nick" (Just "u")
 
 ageAcc :: Accessor.Accessor Person Int Int
 ageAcc = frAcc @"age"
@@ -47,6 +67,23 @@ tests =
     , TestCase (assertEqual "dot set first score" [99, 20, 30] (frGet @"scores" (set firstScoreAcc 99 person)))
     , TestCase (assertEqual "fdot view each score" [10, 20, 30] (view eachScoreAcc person))
     , TestCase (assertEqual "fdot over each score" [11, 21, 31] (frGet @"scores" (over eachScoreAcc (+ 1) person)))
+    , TestCase $
+        case eitherDecode (encode personMaybeNothing) of
+          Left err -> assertFailure ("decode Value failed: " ++ err)
+          Right (Object obj) ->
+            assertEqual "toJSON omit Nothing field" False (KM.member (Key.fromString "nick") obj)
+          Right _ -> assertFailure "expected JSON object"
+    , TestCase $
+        case (eitherDecode (LBS.pack "{\"name\":\"uwu\"}") :: Either String PersonMaybe) of
+          Left err -> assertFailure ("parseJSON missing Maybe field failed: " ++ err)
+          Right v ->
+            assertEqual "parseJSON missing Maybe field -> Nothing" Nothing (frGet @"nick" v)
+    , TestCase $
+        case eitherDecode (encode personMaybeJust) of
+          Left err -> assertFailure ("decode Value failed: " ++ err)
+          Right (Object obj) ->
+            assertEqual "toJSON include Just field" True (KM.member (Key.fromString "nick") obj)
+          Right _ -> assertFailure "expected JSON object"
     ]
 
 main :: IO ()

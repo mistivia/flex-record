@@ -99,3 +99,47 @@ frGet @"scores" (over eachScoreAcc (+ 1) person)
 -- [11,21,31]
 ```
 
+## JSON
+
+`FlexRecord.Json` provides `ToJSON` / `FromJSON` instances for `FlexRecord`.
+
+```haskell
+import Data.Aeson (eitherDecode, encode)
+import qualified Data.ByteString.Lazy.Char8 as LBS
+import FlexRecord (Field, FlexRecord, field, flexRecord, frGet)
+import FlexRecord.Json ()
+```
+
+> Note: `FlexRecord.Json` is imported for side effects (instance declarations), so use `import FlexRecord.Json ()`.
+
+### Simple usage
+
+```haskell
+type Person =
+    FlexRecord
+    [ Field "name" String
+    , Field "age" Int
+    ]
+
+person :: Person
+person = flexRecord
+    $ field @"name" "uwu"
+    . field @"age" 18
+```
+
+Encoding:
+
+```haskell
+encode person
+-- {"name":"uwu","age":18}
+```
+
+Decoding:
+
+```haskell
+case eitherDecode (LBS.pack "{\"name\":\"owo\",\"age\":20}") :: Either String Person of
+    Left err -> putStrLn err
+    Right p -> print (frGet @"name" p, frGet @"age" p)
+-- ("owo",20)
+```
+
