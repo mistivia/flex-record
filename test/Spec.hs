@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeApplications #-}
 
-import Accessor (dot, fdot, over, set, view)
+import Accessor (dot, facc, over, set, view)
 import qualified Accessor
 import FlexRecord (Field, FlexRecord, field, flexRecord, frAcc, frGet, frSet)
 import Test.HUnit (Test (TestCase, TestList), assertEqual, errors, failures, runTestTT)
@@ -33,7 +33,7 @@ firstScoreAcc :: Accessor.Accessor Person Int Int
 firstScoreAcc = dot (frAcc @"scores") Accessor._0
 
 eachScoreAcc :: Accessor.Accessor Person Int [Int]
-eachScoreAcc = fdot (frAcc @"scores") Accessor.self
+eachScoreAcc = dot (frAcc @"scores") $ facc Accessor.self
 
 tests :: Test
 tests =
