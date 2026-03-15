@@ -5,11 +5,6 @@
 module Data.FlexRecord
   ( Field (..),
     FlexRecord (..),
-    GetFieldType,
-    FieldMatch,
-    FlexRecordImpl,
-    frGetImpl,
-    frSetImpl,
     frGet,
     frSet,
     frAcc,
@@ -55,13 +50,16 @@ instance
   frGetImpl (FRCons _ xs) = frGetImpl @(FieldMatch name fs) @name @fs xs
   frSetImpl v (FRCons f xs) = FRCons f (frSetImpl @(FieldMatch name fs) @name @fs v xs)
 
-frGet :: forall (name :: Symbol) fs. FlexRecordImpl (FieldMatch name fs) name fs => FlexRecord fs -> GetFieldType name fs
-frGet = frGetImpl @(FieldMatch name fs) @name
+class FrClass (name :: Symbol) (fs :: [Type]) where
+  frGet :: FlexRecord fs -> GetFieldType name fs
+  frSet :: GetFieldType name fs -> FlexRecord fs -> FlexRecord fs
 
-frSet :: forall (name :: Symbol) fs. FlexRecordImpl (FieldMatch name fs) name fs => GetFieldType name fs -> FlexRecord fs -> FlexRecord fs
-frSet = frSetImpl @(FieldMatch name fs) @name
+instance (FlexRecordImpl (FieldMatch name fs) name fs) => FrClass name fs where
+  frGet = frGetImpl @(FieldMatch name fs) @name
+  frSet = frSetImpl @(FieldMatch name fs) @name
 
-frAcc :: forall (name :: Symbol) fs. FlexRecordImpl (FieldMatch name fs) name fs => Accessor.Accessor (FlexRecord fs) (GetFieldType name fs) (GetFieldType name fs)
+frAcc :: forall name fs. (FrClass name fs)
+  => Accessor.Accessor (FlexRecord fs) (GetFieldType name fs) (GetFieldType name fs)
 frAcc = Accessor.accessor (frGet @name) (frSet @name)
 
 field :: forall s a r. a -> (FlexRecord r -> FlexRecord (Field s a ': r))
