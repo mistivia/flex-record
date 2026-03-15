@@ -60,11 +60,11 @@ if a field name does not exist, compilation fails.
 
 ## Using with accessor-hs
 
-`frAcc` turns a field into an `Accessor`, so you can continue using `view` / `set` / `over` / `dot` / `fdot`.
+`frAcc` turns a field into an `Accessor`, so you can continue using `view` / `set` / `over` / `dot` / `facc`.
 
 ```haskell
 import qualified Data.Accessor as Accessor
-import Data.Accessor (dot, fdot, over, set, view)
+import Data.Accessor (dot, facc, over, set, view)
 import Data.FlexRecord (frAcc)
 
 ageAcc :: Accessor.Accessor Person Int Int
@@ -74,7 +74,7 @@ firstScoreAcc :: Accessor.Accessor Person Int Int
 firstScoreAcc = dot (frAcc @"scores") Accessor._0
 
 eachScoreAcc :: Accessor.Accessor Person Int [Int]
-eachScoreAcc = fdot (frAcc @"scores") Accessor.self
+eachScoreAcc = dot (frAcc @"scores") $ facc Accessor.self
 ```
 
 Usage examples:
