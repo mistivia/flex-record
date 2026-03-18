@@ -123,6 +123,26 @@ errorStatus = flexEnum @"error" "Connection failed"
 
 Use `flexEnum` with type application to select which field you want to use. The value must match the field's type.
 
+### Pattern matching with flexMatch
+
+`flexMatch` provides exhaustive pattern matching for `FlexEnum` values. Combined with `inCase`, you can handle all possible variants in a type-safe way:
+
+```haskell
+import Data.FlexRecord (flexMatch, inCase)
+
+status :: Status
+status = flexEnum @"loading" 50
+
+-- Exhaustive pattern matching using flexMatch and inCase
+message :: String
+message = flexMatch status
+    $ inCase @"idle"    (\_   -> "Waiting...")
+    . inCase @"loading" (\n  -> "Loading " ++ show n ++ "%")
+    . inCase @"error"   (\err -> "Failed: " ++ err)
+-- result: "Loading 50%"
+```
+
+The `inCase` function adds a handler for a specific field. Handlers are composed with `.` (just like `field` for records). Each handler receives the value contained in that variant and returns a result of the same type.
 
 ## JSON
 

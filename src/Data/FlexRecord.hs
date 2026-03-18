@@ -7,12 +7,15 @@ module Data.FlexRecord
     FlexRecord (..),
     FlexEnum (..),
     NoDuplicateField,
+    FlexEnumMatcher,
     frGet,
     frSet,
     frAcc,
     field,
     flexRecord,
     flexEnum,
+    flexMatch,
+    inCase,
   )
 where
 
@@ -97,3 +100,21 @@ flexEnum val = flexEnumImpl @(FieldMatch name xs) @name @xs val
 
 flexRecord :: (FlexRecord '[] -> r) -> r
 flexRecord f = f FRNil
+
+type family FlexEnumMatcher (fe :: Type) (res :: Type) :: Type where
+  FlexEnumMatcher (FlexEnum fs) res = FlexRecord (FlexEnumMatcherList fs res)
+
+type family FlexEnumMatcherList (fs :: [Type]) (res :: Type) :: [Type] where
+  FlexEnumMatcherList '[] res = '[]
+  FlexEnumMatcherList (Field name t ': fs) res =
+    Field name (t -> res) ': FlexEnumMatcherList fs res
+
+flexEnumMatch :: FlexEnum fs -> FlexEnumMatcher (FlexEnum fs) res -> res
+flexEnumMatch (FEThis (Field val)) (FRCons (Field f) _) = f val
+flexEnumMatch (FENext enum) (FRCons _ matcher) = flexEnumMatch enum matcher
+
+inCase :: forall name t r res. NoDuplicateField name r => (t -> res) -> (FlexRecord r -> FlexRecord (Field name (t -> res) ': r))
+inCase f = FRCons (Field @name f)
+
+flexMatch :: FlexEnum fs -> ((FlexRecord '[] -> FlexRecord (FlexEnumMatcherList fs res)) -> res)
+flexMatch fe builder = flexEnumMatch fe (builder FRNil)

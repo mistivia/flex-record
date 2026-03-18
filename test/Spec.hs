@@ -4,7 +4,7 @@ import Data.Aeson (Value (Object), eitherDecode, encode)
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KM
 import qualified Data.ByteString.Lazy.Char8 as LBS
-import Data.FlexRecord (Field (..), FlexRecord, FlexEnum (..), field, flexRecord, frAcc, frGet, frSet, flexEnum)
+import Data.FlexRecord (Field (..), FlexRecord, FlexEnum (..), field, flexRecord, frAcc, frGet, frSet, flexEnum, flexMatch, inCase)
 import Data.FlexRecord.Json ()
 import Test.HUnit (Test (TestCase, TestList), assertEqual, assertFailure, errors, failures, runTestTT)
 
@@ -120,6 +120,26 @@ tests =
             case fe of
               FENext (FEThis (Field "abc")) -> assertEqual "flexEnum second field produces FENext(FEThis)" True True
               _ -> assertFailure "expected FENext(FEThis(Field \"abc\"))"
+        )
+    -- Test 5: Test flexMatch with first field
+    , TestCase
+        ( let
+            fe = flexEnum @"name" "alice" :: FlexEnum '[Field "name" String, Field "age" Int]
+            result = flexMatch fe
+              $ inCase @"name" (\n -> "name: " ++ n)
+              . inCase @"age" (\a -> "age: " ++ show a)
+          in
+            assertEqual "flexMatch first field" "name: alice" result
+        )
+    -- Test 6: Test flexMatch with second field
+    , TestCase
+        ( let
+            fe = flexEnum @"age" 25 :: FlexEnum '[Field "name" String, Field "age" Int]
+            result = flexMatch fe
+              $ inCase @"name" (\n -> "name: " ++ n)
+              . inCase @"age" (\a -> "age: " ++ show a)
+          in
+            assertEqual "flexMatch second field" "age: 25" result
         )
     ]
 
