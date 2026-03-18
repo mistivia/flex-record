@@ -5,12 +5,14 @@
 module Data.FlexRecord
   ( Field (..),
     FlexRecord (..),
+    FlexEnum (..),
     NoDuplicateField,
     frGet,
     frSet,
     frAcc,
     field,
     flexRecord,
+    flexEnum,
   )
 where
 
@@ -24,6 +26,10 @@ data Field (name :: Symbol) t where
 data FlexRecord (fs :: [Type]) where
   FRNil :: FlexRecord '[]
   FRCons :: NoDuplicateField name xs => Field name t -> FlexRecord xs -> FlexRecord (Field name t ': xs)
+
+data FlexEnum (fs :: [Type]) where
+  FEThis :: NoDuplicateField name xs => Field name t -> FlexEnum (Field name t ': xs)
+  FENext :: NoDuplicateField name xs => FlexEnum xs -> FlexEnum (Field name t ': xs)
 
 type family GetFieldType (name :: Symbol) (fs :: [Type]) :: Type where
   GetFieldType name (Field name t ': fs) = t
@@ -72,6 +78,22 @@ frAcc = Accessor.accessor (frGet @name) (frSet @name)
 
 field :: forall s a r. NoDuplicateField s r => a -> (FlexRecord r -> FlexRecord (Field s a ': r))
 field val = FRCons (Field @s val)
+
+class FlexEnumImpl matched name fs where
+  flexEnumImpl :: (GetFieldType name fs) -> FlexEnum fs
+
+instance (NoDuplicateField name xs) =>
+    FlexEnumImpl True name (Field name t ': xs) where
+  flexEnumImpl val = FEThis (Field @name val)
+
+instance ( NoDuplicateField name' xs
+         , GetFieldType name (Field name' t : xs) ~ GetFieldType name xs
+         , FlexEnumImpl (FieldMatch name xs) name xs) =>
+  FlexEnumImpl False name (Field name' t ': xs) where
+  flexEnumImpl val = FENext (flexEnumImpl @(FieldMatch name xs) @name val :: FlexEnum xs)
+
+flexEnum :: forall (name :: Symbol) xs. (FlexEnumImpl (FieldMatch name xs) name xs) => GetFieldType name xs -> FlexEnum xs
+flexEnum val = flexEnumImpl @(FieldMatch name xs) @name @xs val
 
 flexRecord :: (FlexRecord '[] -> r) -> r
 flexRecord f = f FRNil

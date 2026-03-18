@@ -4,7 +4,7 @@ import Data.Aeson (Value (Object), eitherDecode, encode)
 import qualified Data.Aeson.Key as Key
 import qualified Data.Aeson.KeyMap as KM
 import qualified Data.ByteString.Lazy.Char8 as LBS
-import Data.FlexRecord (Field, FlexRecord, field, flexRecord, frAcc, frGet, frSet)
+import Data.FlexRecord (Field (..), FlexRecord, FlexEnum (..), field, flexRecord, frAcc, frGet, frSet, flexEnum)
 import Data.FlexRecord.Json ()
 import Test.HUnit (Test (TestCase, TestList), assertEqual, assertFailure, errors, failures, runTestTT)
 
@@ -84,6 +84,43 @@ tests =
           Right (Object obj) ->
             assertEqual "toJSON include Just field" True (KM.member (Key.fromString "nick") obj)
           Right _ -> assertFailure "expected JSON object"
+    -- FlexEnum tests
+    -- Test 1: Creating a FlexEnum for the first field should produce FEThis
+    , TestCase
+        ( let
+            fe = flexEnum @"name" "alice" :: FlexEnum '[Field "name" String]
+          in
+            case fe of
+              FEThis _ -> assertEqual "flexEnum first field produces FEThis" True True
+              _ -> assertFailure "expected FEThis"
+        )
+    -- Test 2: Creating a FlexEnum for a different type should produce FENext when recursed
+    , TestCase
+        ( let
+            fe = flexEnum @"x" True :: FlexEnum '[Field "x" Bool]
+          in
+            case fe of
+              FEThis _ -> assertEqual "flexEnum bool field produces FEThis" True True
+              _ -> assertFailure "expected FEThis"
+        )
+    -- Test 3: Test pattern matching on nested FlexEnum
+    , TestCase
+        ( let
+            fe = flexEnum @"x" 42 :: FlexEnum '[Field "x" Int, Field "y" String]
+          in
+            case fe of
+              FEThis (Field 42) -> assertEqual "flexEnum nested FEThis matches" True True
+              _ -> assertFailure "expected FEThis with Field 42"
+        )
+    -- Test 4: Test selecting second field in a FlexEnum (produces FENext)
+    , TestCase
+        ( let
+            fe = flexEnum @"y" "abc" :: FlexEnum '[Field "x" Int, Field "y" String]
+          in
+            case fe of
+              FENext (FEThis (Field "abc")) -> assertEqual "flexEnum second field produces FENext(FEThis)" True True
+              _ -> assertFailure "expected FENext(FEThis(Field \"abc\"))"
+        )
     ]
 
 main :: IO ()
