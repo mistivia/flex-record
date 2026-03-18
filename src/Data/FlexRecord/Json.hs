@@ -10,7 +10,7 @@ import qualified Data.Aeson.Key as Key
 import Data.Aeson.Types (Object, Pair, Parser)
 import Data.Kind (Type)
 import Data.Proxy (Proxy (Proxy))
-import Data.FlexRecord (Field (Field), FlexRecord (FRCons, FRNil))
+import Data.FlexRecord (Field (Field), FlexRecord (FRCons, FRNil), NoDuplicateField)
 import GHC.TypeLits (KnownSymbol, symbolVal)
 
 type family IsMaybe (t :: Type) :: Bool where
@@ -77,6 +77,7 @@ instance
   ( KnownSymbol name
   , ParseField t
   , FlexRecordFromObject fs
+  , Data.FlexRecord.NoDuplicateField name fs
   ) =>
   FlexRecordFromObject (Field name t ': fs)
   where

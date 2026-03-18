@@ -5,6 +5,7 @@
 module Data.FlexRecord
   ( Field (..),
     FlexRecord (..),
+    NoDuplicateField,
     frGet,
     frSet,
     frAcc,
@@ -14,15 +15,15 @@ module Data.FlexRecord
 where
 
 import qualified Data.Accessor as Accessor
-import Data.Kind (Type)
-import GHC.TypeLits (ErrorMessage (Text), Symbol, TypeError)
+import Data.Kind (Constraint, Type)
+import GHC.TypeLits (ErrorMessage (Text, (:<>:)), Symbol, TypeError)
 
 data Field (name :: Symbol) t where
   Field :: forall name t. t -> Field name t
 
 data FlexRecord (fs :: [Type]) where
   FRNil :: FlexRecord '[]
-  FRCons :: Field name t -> FlexRecord xs -> FlexRecord (Field name t ': xs)
+  FRCons :: NoDuplicateField name xs => Field name t -> FlexRecord xs -> FlexRecord (Field name t ': xs)
 
 type family GetFieldType (name :: Symbol) (fs :: [Type]) :: Type where
   GetFieldType name (Field name t ': fs) = t
@@ -32,6 +33,13 @@ type family GetFieldType (name :: Symbol) (fs :: [Type]) :: Type where
 type family FieldMatch (name :: Symbol) (fs :: [Type]) :: Bool where
   FieldMatch name (Field name t ': fs) = True
   FieldMatch name fs = False
+
+type family NoDuplicateField (name :: Symbol) (fs :: [Type]) :: Constraint where
+  NoDuplicateField name fs = NoDuplicateFieldImpl (FieldMatch name fs) name
+
+type family NoDuplicateFieldImpl (match :: Bool) (name :: Symbol) :: Constraint where
+  NoDuplicateFieldImpl True name = TypeError (Text "Duplicate field name: " :<>: Text name)
+  NoDuplicateFieldImpl False name = ()
 
 class FlexRecordImpl (fieldMatch :: Bool) (name :: Symbol) (fs :: [Type]) where
   frGetImpl :: FlexRecord fs -> GetFieldType name fs
@@ -62,7 +70,7 @@ frAcc :: forall name fs. (FrClass name fs)
   => Accessor.Accessor (FlexRecord fs) (GetFieldType name fs) (GetFieldType name fs)
 frAcc = Accessor.accessor (frGet @name) (frSet @name)
 
-field :: forall s a r. a -> (FlexRecord r -> FlexRecord (Field s a ': r))
+field :: forall s a r. NoDuplicateField s r => a -> (FlexRecord r -> FlexRecord (Field s a ': r))
 field val = FRCons (Field @s val)
 
 flexRecord :: (FlexRecord '[] -> r) -> r
