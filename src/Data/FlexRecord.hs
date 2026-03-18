@@ -50,53 +50,43 @@ type family NoDuplicateFieldImpl (match :: Bool) (name :: Symbol) :: Constraint 
   NoDuplicateFieldImpl True name = TypeError (Text "Duplicate field name: " :<>: Text name)
   NoDuplicateFieldImpl False name = ()
 
-class FlexRecordImpl (fieldMatch :: Bool) (name :: Symbol) (fs :: [Type]) where
-  frGetImpl :: FlexRecord fs -> GetFieldType name fs
-  frSetImpl :: GetFieldType name fs -> FlexRecord fs -> FlexRecord fs
-
-instance FlexRecordImpl True name (Field name t : fs) where
-  frGetImpl (FRCons (Field v) _) = v
-  frSetImpl v (FRCons _ xs) = FRCons (Field @name v) xs
-
-instance
-  ( GetFieldType name (Field name' t : fs) ~ GetFieldType name fs,
-    FlexRecordImpl (FieldMatch name fs) name fs
-  ) =>
-  FlexRecordImpl False name (Field name' t ': fs)
-  where
-  frGetImpl (FRCons _ xs) = frGetImpl @(FieldMatch name fs) @name @fs xs
-  frSetImpl v (FRCons f xs) = FRCons f (frSetImpl @(FieldMatch name fs) @name @fs v xs)
-
-class FrClass (name :: Symbol) (fs :: [Type]) where
+class FlexRecordImpl (name :: Symbol) (fs :: [Type]) where
   frGet :: FlexRecord fs -> GetFieldType name fs
   frSet :: GetFieldType name fs -> FlexRecord fs -> FlexRecord fs
 
-instance (FlexRecordImpl (FieldMatch name fs) name fs) => FrClass name fs where
-  frGet = frGetImpl @(FieldMatch name fs) @name
-  frSet = frSetImpl @(FieldMatch name fs) @name
+instance {-# OVERLAPS #-} FlexRecordImpl name (Field name t : fs) where
+  frGet (FRCons (Field v) _) = v
+  frSet v (FRCons _ xs) = FRCons (Field @name v) xs
 
-frAcc :: forall name fs. (FrClass name fs)
+instance {-# OVERLAPS #-}
+  ( GetFieldType name (Field name' t : fs) ~ GetFieldType name fs
+  , FlexRecordImpl name fs
+  , (FieldMatch name (Field name' t ': fs)) ~ 'False
+  ) => FlexRecordImpl name (Field name' t ': fs) where
+  frGet (FRCons _ xs) = frGet @name @fs xs
+  frSet v (FRCons f xs) = FRCons f (frSet @name @fs v xs)
+
+frAcc :: forall name fs. (FlexRecordImpl name fs)
   => Accessor.Accessor (FlexRecord fs) (GetFieldType name fs) (GetFieldType name fs)
 frAcc = Accessor.accessor (frGet @name) (frSet @name)
 
 field :: forall s a r. NoDuplicateField s r => a -> (FlexRecord r -> FlexRecord (Field s a ': r))
 field val = FRCons (Field @s val)
 
-class FlexEnumImpl matched name fs where
-  flexEnumImpl :: (GetFieldType name fs) -> FlexEnum fs
+class FlexEnumImpl name fs where
+  flexEnum :: (GetFieldType name fs) -> FlexEnum fs
 
-instance (NoDuplicateField name xs) =>
-    FlexEnumImpl True name (Field name t ': xs) where
-  flexEnumImpl val = FEThis (Field @name val)
+instance {-# OVERLAPS #-} (NoDuplicateField name xs) =>
+    FlexEnumImpl name (Field name t ': xs) where
+  flexEnum val = FEThis (Field @name val)
 
-instance ( NoDuplicateField name' xs
-         , GetFieldType name (Field name' t : xs) ~ GetFieldType name xs
-         , FlexEnumImpl (FieldMatch name xs) name xs) =>
-  FlexEnumImpl False name (Field name' t ': xs) where
-  flexEnumImpl val = FENext (flexEnumImpl @(FieldMatch name xs) @name val :: FlexEnum xs)
-
-flexEnum :: forall (name :: Symbol) xs. (FlexEnumImpl (FieldMatch name xs) name xs) => GetFieldType name xs -> FlexEnum xs
-flexEnum val = flexEnumImpl @(FieldMatch name xs) @name @xs val
+instance {-# OVERLAPS #-}
+    ( NoDuplicateField name' xs
+    , GetFieldType name (Field name' t : xs) ~ GetFieldType name xs
+    , FlexEnumImpl name xs
+    , FieldMatch name (Field name' t : xs) ~ False) =>
+  FlexEnumImpl name (Field name' t ': xs) where
+  flexEnum val = FENext (flexEnum @name val :: FlexEnum xs)
 
 flexRecord :: (FlexRecord '[] -> r) -> r
 flexRecord f = f FRNil
