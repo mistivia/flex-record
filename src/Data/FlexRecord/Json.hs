@@ -10,8 +10,9 @@ import qualified Data.Aeson.Key as Key
 import Data.Aeson.Types (Object, Pair, Parser)
 import Data.Kind (Type)
 import Data.Proxy (Proxy (Proxy))
-import Data.FlexRecord (Field (Field), FlexRecord (FRCons, FRNil), NoDuplicateField)
+import Data.FlexRecord (Field (Field), FlexRecord (FRCons, FRNil), FlexEnum (FEThis, FENext), NoDuplicateField)
 import GHC.TypeLits (KnownSymbol, symbolVal)
+import qualified Data.Text as T
 
 type family IsMaybe (t :: Type) :: Bool where
   IsMaybe (Maybe _) = 'True
@@ -88,3 +89,73 @@ instance
 
 instance (FlexRecordFromObject fs) => FromJSON (FlexRecord fs) where
   parseJSON = withObject "FlexRecord" parseFlexRecordObject
+
+
+-- ToJSON for FlexEnum
+
+typeKey, valueKey :: Key.Key
+typeKey = Key.fromString "type"
+valueKey = Key.fromString "value"
+
+class FlexEnumToJSON (fs :: [Type]) where
+  flexEnumToJSON :: FlexEnum fs -> Aeson.Value
+
+instance (ToJSON t, KnownSymbol name) => FlexEnumToJSON (Field name t ': '[]) where
+  flexEnumToJSON (FEThis (Field value)) =
+    object
+      [ typeKey .= symbolVal (Proxy @name)
+      , valueKey .= value
+      ]
+
+instance
+  ( KnownSymbol name
+  , ToJSON t
+  , FlexEnumToJSON (Field name' t' ': xs)
+  ) =>
+  FlexEnumToJSON (Field name t ': Field name' t' ': xs)
+  where
+  flexEnumToJSON (FEThis (Field value)) =
+    object
+      [ typeKey .= symbolVal (Proxy @name)
+      , valueKey .= value
+      ]
+  flexEnumToJSON (FENext rest) = flexEnumToJSON rest
+
+instance (FlexEnumToJSON fs) => ToJSON (FlexEnum fs) where
+  toJSON = flexEnumToJSON
+
+
+-- FromJSON for FlexEnum
+
+class FlexEnumFromJSON (fs :: [Type]) where
+  flexEnumParseJSON :: Object -> Parser (FlexEnum fs)
+
+instance (FromJSON t, KnownSymbol name, NoDuplicateField name '[]) => FlexEnumFromJSON (Field name t ': '[]) where
+  flexEnumParseJSON obj = do
+    typeStr <- obj Aeson..: typeKey
+    let expectedType = T.pack (symbolVal (Proxy @name))
+    if typeStr == expectedType
+      then do
+        value <- obj Aeson..: valueKey
+        pure (FEThis (Field @name value))
+      else fail $ "Unknown type: " ++ T.unpack typeStr
+
+instance
+  ( KnownSymbol name
+  , FromJSON t
+  , NoDuplicateField name (Field name' t' ': xs)
+  , FlexEnumFromJSON (Field name' t' ': xs)
+  ) =>
+  FlexEnumFromJSON (Field name t ': Field name' t' ': xs)
+  where
+  flexEnumParseJSON obj = do
+    typeStr <- obj Aeson..: typeKey
+    let expectedType = T.pack (symbolVal (Proxy @name))
+    if typeStr == expectedType
+      then do
+        value <- obj Aeson..: valueKey
+        pure (FEThis (Field @name value))
+      else FENext <$> flexEnumParseJSON obj
+
+instance (FlexEnumFromJSON fs) => FromJSON (FlexEnum fs) where
+  parseJSON = withObject "FlexEnum" flexEnumParseJSON

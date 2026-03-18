@@ -141,6 +141,77 @@ tests =
           in
             assertEqual "flexMatch second field" "age: 25" result
         )
+    -- FlexEnum ToJSON/FromJSON tests
+    -- Test 7: ToJSON for single-field FlexEnum
+    , TestCase
+        ( let
+            fe = flexEnum @"x" 42 :: FlexEnum '[Field "x" Int]
+            json = encode fe
+          in
+            assertEqual "toJSON single field" "{\"type\":\"x\",\"value\":42}" (LBS.unpack json)
+        )
+    -- Test 8: ToJSON for first field in multi-field FlexEnum
+    , TestCase
+        ( let
+            fe = flexEnum @"name" "alice" :: FlexEnum '[Field "name" String, Field "age" Int]
+            json = encode fe
+          in
+            assertEqual "toJSON first field" "{\"type\":\"name\",\"value\":\"alice\"}" (LBS.unpack json)
+        )
+    -- Test 9: ToJSON for second field in multi-field FlexEnum
+    , TestCase
+        ( let
+            fe = flexEnum @"age" 25 :: FlexEnum '[Field "name" String, Field "age" Int]
+            json = encode fe
+          in
+            assertEqual "toJSON second field" "{\"type\":\"age\",\"value\":25}" (LBS.unpack json)
+        )
+    -- Test 10: FromJSON for single-field FlexEnum
+    , TestCase
+        ( case (eitherDecode (LBS.pack "{\"type\":\"x\",\"value\":42}") :: Either String (FlexEnum '[Field "x" Int])) of
+            Left err -> assertFailure ("decode FlexEnum failed: " ++ err)
+            Right fe ->
+              case fe of
+                FEThis (Field 42) -> assertEqual "fromJSON single field" True True
+                _ -> assertFailure "expected FEThis with Field 42"
+        )
+    -- Test 11: FromJSON for first field in multi-field FlexEnum
+    , TestCase
+        ( case (eitherDecode (LBS.pack "{\"type\":\"name\",\"value\":\"alice\"}") :: Either String (FlexEnum '[Field "name" String, Field "age" Int])) of
+            Left err -> assertFailure ("decode FlexEnum failed: " ++ err)
+            Right fe ->
+              case fe of
+                FEThis (Field "alice") -> assertEqual "fromJSON first field" True True
+                _ -> assertFailure "expected FEThis with Field \"alice\""
+        )
+    -- Test 12: FromJSON for second field in multi-field FlexEnum
+    , TestCase
+        ( case (eitherDecode (LBS.pack "{\"type\":\"age\",\"value\":25}") :: Either String (FlexEnum '[Field "name" String, Field "age" Int])) of
+            Left err -> assertFailure ("decode FlexEnum failed: " ++ err)
+            Right fe ->
+              case fe of
+                FENext (FEThis (Field 25)) -> assertEqual "fromJSON second field" True True
+                _ -> assertFailure "expected FENext(FEThis(Field 25))"
+        )
+    -- Test 13: FromJSON with unknown type fails
+    , TestCase
+        ( case (eitherDecode (LBS.pack "{\"type\":\"unknown\",\"value\":123}") :: Either String (FlexEnum '[Field "x" Int])) of
+            Left _ -> assertEqual "fromJSON unknown type fails" True True
+            Right _ -> assertFailure "expected decode to fail for unknown type"
+        )
+    -- Test 14: Round-trip encode/decode
+    , TestCase
+        ( let
+            fe = flexEnum @"age" 30 :: FlexEnum '[Field "name" String, Field "age" Int]
+            decoded = eitherDecode (encode fe) :: Either String (FlexEnum '[Field "name" String, Field "age" Int])
+          in
+            case decoded of
+              Left err -> assertFailure ("round-trip decode failed: " ++ err)
+              Right feDecoded ->
+                case feDecoded of
+                  FENext (FEThis (Field 30)) -> assertEqual "round-trip decode" True True
+                  _ -> assertFailure "expected FENext(FEThis(Field 30))"
+        )
     ]
 
 main :: IO ()
