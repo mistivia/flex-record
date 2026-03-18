@@ -10,7 +10,7 @@ It provides:
 
 ## Quick Start
 
-### 1) Define a Record type
+### FlexRecord
 
 ```haskell
 import FlexRecord (Field, FlexRecord)
@@ -22,8 +22,6 @@ type Person = FlexRecord
     , Field "scores" [Int]
     ]
 ```
-
-### Construct a Record value
 
 Use `flexRecord` + `field` to build from an empty record via function composition:
 
@@ -38,7 +36,7 @@ person = flexRecord
     . field @"scores" [ 10, 20, 30]
 ```
 
-### 3) Read and update fields
+Read and update fields:
 
 ```haskell
 import FlexRecord (frGet, frSet)
@@ -58,7 +56,7 @@ age2 = frGet @"age" person2
 `frGet` / `frSet` are both type-safe:  
 if a field name does not exist, compilation fails.
 
-## Using with accessor-hs
+Using with accessor-hs:
 
 `frAcc` turns a field into an `Accessor`, so you can continue using `view` / `set` / `over` / `dot` / `facc`.
 
@@ -98,6 +96,33 @@ frGet @"scores" (set firstScoreAcc 99 person)
 frGet @"scores" (over eachScoreAcc (+ 1) person)
 -- [11,21,31]
 ```
+
+### FlexEnum
+
+`FlexEnum` is a variant type (tagged union) that holds exactly one field value from a set of possible fields. Unlike `FlexRecord` which holds all fields simultaneously, `FlexEnum` represents a choice among different alternatives.
+
+```haskell
+import Data.FlexRecord (Field, FlexEnum)
+import Data.FlexRecord (flexEnum)
+
+type Status = FlexEnum
+    [ Field "idle"    ()
+    , Field "loading" Int
+    , Field "error"   String
+    ]
+
+idleStatus :: Status
+idleStatus = flexEnum @"idle" ()
+
+loadingStatus :: Status
+loadingStatus = flexEnum @"loading" 50
+
+errorStatus :: Status
+errorStatus = flexEnum @"error" "Connection failed"
+```
+
+Use `flexEnum` with type application to select which field you want to use. The value must match the field's type.
+
 
 ## JSON
 
