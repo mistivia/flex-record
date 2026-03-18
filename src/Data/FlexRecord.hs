@@ -3,19 +3,19 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 module Data.FlexRecord
-  ( Field (..),
-    FlexRecord (..),
-    FlexEnum (..),
-    NoDuplicateField,
-    FlexEnumMatcher,
-    frGet,
-    frSet,
-    frAcc,
-    field,
-    flexRecord,
-    flexEnum,
-    flexMatch,
-    inCase,
+  ( Field (..)
+  , FlexRecord (..)
+  , FlexEnum (..)
+  , NoDuplicateField
+  , FlexEnumMatcher
+  , frGet
+  , frSet
+  , frAcc
+  , field
+  , flexRecord
+  , flexEnum
+  , flexMatch
+  , inCase
   )
 where
 
