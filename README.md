@@ -62,17 +62,14 @@ Using with accessor-hs:
 
 ```haskell
 import qualified Data.Accessor as Accessor
-import Data.Accessor (dot, facc, over, set, view)
+import Data.Accessor (facc, over, set, view)
 import Data.FlexRecord (frAcc)
 
-ageAcc :: Accessor.Accessor Person Int Int
 ageAcc = frAcc @"age"
 
-firstScoreAcc :: Accessor.Accessor Person Int Int
-firstScoreAcc = dot (frAcc @"scores") Accessor._0
+firstScoreAcc = frAcc @"scores" . Accessor._0
 
-eachScoreAcc :: Accessor.Accessor Person Int [Int]
-eachScoreAcc = dot (frAcc @"scores") $ facc Accessor.self
+eachScoreAcc = frAcc @"scores" . facc
 ```
 
 Usage examples:
