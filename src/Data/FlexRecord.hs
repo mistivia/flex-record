@@ -67,7 +67,7 @@ instance {-# OVERLAPS #-}
   frSet v (FRCons f xs) = FRCons f (frSet @name @fs v xs)
 
 frAcc :: forall name fs. (FlexRecordImpl name fs)
-  => Accessor.Accessor (FlexRecord fs) (GetFieldType name fs) (GetFieldType name fs)
+  => Accessor.Accessor (FlexRecord fs) (GetFieldType name fs)
 frAcc = Accessor.accessor (frGet @name) (frSet @name)
 
 field :: forall s a r. NoDuplicateField s r => a -> (FlexRecord r -> FlexRecord (Field s a ': r))

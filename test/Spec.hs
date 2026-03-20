@@ -1,4 +1,4 @@
-import Data.Accessor (dot, facc, over, set, view)
+import Data.Accessor (facc, over, set, view)
 import qualified Data.Accessor as Accessor
 import Data.Aeson (Value (Object), eitherDecode, encode)
 import qualified Data.Aeson.Key as Key
@@ -50,14 +50,13 @@ personMaybeJust =
     $ field @"name" "uwu"
     . field @"nick" (Just "u")
 
-ageAcc :: Accessor.Accessor Person Int Int
+ageAcc :: Accessor.Accessor Person Int
 ageAcc = frAcc @"age"
 
-firstScoreAcc :: Accessor.Accessor Person Int Int
-firstScoreAcc = dot (frAcc @"scores") Accessor._0
+firstScoreAcc :: Accessor.Accessor Person Int
+firstScoreAcc = frAcc @"scores" . Accessor._0
 
-eachScoreAcc :: Accessor.Accessor Person Int [Int]
-eachScoreAcc = dot (frAcc @"scores") $ facc Accessor.self
+eachScoreAcc = frAcc @"scores" . facc
 
 tests :: Test
 tests =
@@ -67,10 +66,10 @@ tests =
     , TestCase (assertEqual "accessor view age" 1 (view ageAcc person))
     , TestCase (assertEqual "accessor set age" 3 (frGet @"age" (set ageAcc 3 person)))
     , TestCase (assertEqual "accessor over age" 11 (frGet @"age" (over ageAcc (+ 10) person)))
-    , TestCase (assertEqual "dot view first score" 10 (view firstScoreAcc person))
-    , TestCase (assertEqual "dot set first score" [99, 20, 30] (frGet @"scores" (set firstScoreAcc 99 person)))
-    , TestCase (assertEqual "fdot view each score" [10, 20, 30] (view eachScoreAcc person))
-    , TestCase (assertEqual "fdot over each score" [11, 21, 31] (frGet @"scores" (over eachScoreAcc (+ 1) person)))
+    , TestCase (assertEqual "view first score" 10 (view firstScoreAcc person))
+    , TestCase (assertEqual "set first score" [99, 20, 30] (frGet @"scores" (set firstScoreAcc 99 person)))
+    , TestCase (assertEqual "view each score" [10, 20, 30] (view eachScoreAcc person))
+    , TestCase (assertEqual "over each score" [11, 21, 31] (frGet @"scores" (over eachScoreAcc (+ 1) person)))
     , TestCase $
         case eitherDecode (encode personMaybeNothing) of
           Left err -> assertFailure ("decode Value failed: " ++ err)
