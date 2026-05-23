@@ -1,11 +1,11 @@
 {
-  description = "Haskell project with cabal2nix and hoogle";
+  description = "lightweight Haskell Record library based on type-level field lists";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
     flake-utils.url = "github:numtide/flake-utils";
     accessor-hs = {
-      url = "github:mistivia/accessor-hs";
+      url = "https://github.com/mistivia/releases/releases/download/accessor-hs-0.1.0/accessor-hs-0.1.0.tar.gz";
       inputs.nixpkgs.follows = "nixpkgs";
       inputs.flake-utils.follows = "flake-utils";
     };

@@ -12,15 +12,12 @@
       "locked": {
         "lastModified": 1773996108,
         "narHash": "sha256-MtJjRRBljfCBNvX1UWX6A/M+bYE290ue8hzjWOpqvv4=",
-        "owner": "mistivia",
-        "repo": "accessor-hs",
-        "rev": "f201e590e225740f9599d5e2b982035cc3152ca2",
-        "type": "github"
+        "type": "tarball",
+        "url": "https://github.com/mistivia/releases/releases/download/accessor-hs-0.1.0/accessor-hs-0.1.0.tar.gz"
       },
       "original": {
-        "owner": "mistivia",
-        "repo": "accessor-hs",
-        "type": "github"
+        "type": "tarball",
+        "url": "https://github.com/mistivia/releases/releases/download/accessor-hs-0.1.0/accessor-hs-0.1.0.tar.gz"
       }
     },
     "flake-utils": {
